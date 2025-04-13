@@ -1,0 +1,118 @@
+import json
+import logging
+import time
+import hashlib
+import pickle
+
+from rest_framework import status
+from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.renderers import JSONRenderer
+from rest_framework.request import Request
+from rest_framework.response import Response
+
+from django.core.cache import cache
+
+from .apps import ClassificationConfig
+from .constants import PERSON_NAMES_EN, PERSON_NAMES_RU, LOCATION_NAMES_RU, LOCATION_NAMES_EN
+from .services.fuzzy import FuzzyService
+from .services.language import LanguageService
+from .services.ner import NERService
+from .types.ner import EntityResultDTO
+
+app_name = ClassificationConfig.name
+logger = logging.getLogger(__name__)
+
+language_service = LanguageService()
+ner_service = NERService()
+fuzzy_service = FuzzyService(threshold=85)
+
+def get_cache_key(text: str) -> str:
+    """Генерация ключа кеша на основе текста"""
+    text_hash = hashlib.md5(text.encode('utf-8')).hexdigest()
+    return f"analyze_text:{text_hash}"
+
+def validate_request(request: Request) -> str:
+    """Валидация входящего запроса и извлечение текста"""
+    if not request.body:
+        raise ValueError("Request body is empty")
+
+    try:
+        body = json.loads(request.body.decode('utf-8'))
+        text = body.get("text", "").strip()
+    except json.JSONDecodeError:
+        raise ValueError("Invalid JSON format")
+
+    if not text:
+        raise ValueError("Text parameter is empty")
+    if len(text) > 10000:
+        raise ValueError("Text is too long (max 10,000 characters)")
+
+    return text
+
+@api_view(['POST'])
+@renderer_classes([JSONRenderer])
+def analyze_text(request: Request):
+    method_name = "analyze_text"
+    logger.info(f"[{app_name}] -> {method_name} start:")
+    start_time = time.time()
+    response_status = status.HTTP_200_OK
+    response_data = {}
+
+    try:
+        text = validate_request(request)
+        cache_key = get_cache_key(text)
+
+        if cached := cache.get(cache_key):
+            response_data.update(cached)
+            logger.info(f"[{app_name}] Cache hit for key: {cache_key}")
+            return
+
+        language = language_service.detect(text)
+        entities = ner_service.extract(text, language)
+
+        references = {
+            "persons": PERSON_NAMES_RU if language == 'ru' else PERSON_NAMES_EN,
+            "locations": LOCATION_NAMES_RU if language == 'ru' else LOCATION_NAMES_EN
+        }
+
+        matched_persons = fuzzy_service.match_entities(
+            entities["persons"],
+            references["persons"],
+            entity_type="person"
+        )
+
+        matched_locations = fuzzy_service.match_entities(
+            entities["locations"],
+            references["locations"],
+            entity_type="location"
+        )
+
+        print(entities)
+        response_data.update({
+            "language": language,
+             "entities": EntityResultDTO(
+                persons=ner_service.get_ner_result(entities["persons"]),
+                locations=ner_service.get_ner_result(entities["locations"])
+             ).dict(),
+            "fuzzy_matches": {
+                "persons": fuzzy_service.get_fuzzy_result(matched_persons),
+                "locations": fuzzy_service.get_fuzzy_result(matched_locations)
+            }
+        })
+
+        cache.set(cache_key, response_data, timeout=3600)
+
+    except ValueError as e:
+        logger.warning(f"{method_name} - Client error: {str(e)}")
+        response_status = status.HTTP_400_BAD_REQUEST
+        response_data["error"] = str(e)
+    except Exception as e:
+        logger.exception(f"{method_name} - Server error")
+        response_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+        response_data["error"] = "Internal server error"
+    finally:
+        finish_time = time.time() - start_time
+        logger.info(
+            f"[{app_name}] {method_name} completed in {finish_time:.2f}s. "
+            f"Status: {response_status}. Result: {response_data.get('language')}")
+        return Response(response_data, status=response_status)
