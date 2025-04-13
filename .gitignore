@@ -1,0 +1,8 @@
+.idea
+/logs
+__pycache__/
+/webapp/__pycache__
+/webapp/settings.py
+.env.dev
+.env.prod
+db.sqlite3
