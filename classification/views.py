@@ -26,30 +26,9 @@ language_service = LanguageService()
 ner_service = NERService()
 fuzzy_service = FuzzyService(threshold=85)
 
-def get_cache_key(text: str) -> str:
-    """Генерация ключа кеша на основе текста"""
-    text_hash = hashlib.md5(text.encode('utf-8')).hexdigest()
-    return f"analyze_text:{text_hash}"
-
-def validate_request(request: Request) -> str:
-    """Валидация входящего запроса и извлечение текста"""
-    if not request.body:
-        raise ValueError("Request body is empty")
-
-    try:
-        body = json.loads(request.body.decode('utf-8'))
-        text = body.get("text", "").strip()
-    except json.JSONDecodeError:
-        raise ValueError("Invalid JSON format")
-
-    if not text:
-        raise ValueError("Text parameter is empty")
-    if len(text) > 10000:
-        raise ValueError("Text is too long (max 10,000 characters)")
-
-    return text
-
-@api_view(['POST'])
+        status.HTTP_422_UNPROCESSABLE_ENTITY: OpenApiResponse(
+            response=ErrorSerializer, description="Ошибка валидации данных "
+        ),
 @renderer_classes([JSONRenderer])
 def analyze_text(request: Request):
     method_name = "analyze_text"
@@ -101,6 +80,11 @@ def analyze_text(request: Request):
         })
 
         cache.set(cache_key, response_data, timeout=3600)
+    except ValidationError as e:
+        logger.warning(f"{method_name} - Validation error: {str(e)}")
+        response_status = status.HTTP_422_UNPROCESSABLE_ENTITY
+        response_data["error"] = str(e)
+        response = Response(response_data, status=response_status)
 
     except ValueError as e:
         logger.warning(f"{method_name} - Client error: {str(e)}")
