@@ -1,14 +1,14 @@
+from pydantic import BaseModel
 from typing import List
-from pydantic import BaseModel, Field
-from vsu_task_core.common.ner import NamedEntity
 
-class NamedEntities(BaseModel):
-    List[NamedEntity]
 
-class ExtractedGroupEntities(BaseModel):
-    persons: NamedEntities = Field(default_factory=list)
-    locations: NamedEntities = Field(default_factory=list)
+class NamedEntityDTO(BaseModel):
+    value: str
 
-class ExtractedGroupEntitiesDTO(BaseModel):
+class ExtractedEntitiesDTO(BaseModel):
+    persons: List[NamedEntityDTO]
+    locations: List[NamedEntityDTO]
+
+class EntityResultDTO(BaseModel):
     persons: List[str]
     locations: List[str]
