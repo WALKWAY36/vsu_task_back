@@ -8,7 +8,7 @@ PERSON_NAMES_RU = [
     "Юлия",
     "Сергей",
     "Дмитрий",
-    "Павел"
+    "Павел",
 ]
 
 PERSON_NAMES_EN = [
@@ -21,7 +21,7 @@ PERSON_NAMES_EN = [
     "Julia",
     "Sergey",
     "Dmitriy",
-    "Pavel"
+    "Pavel",
 ]
 
 LOCATION_NAMES_RU = [
@@ -34,7 +34,7 @@ LOCATION_NAMES_RU = [
     "Лондон",
     "Вашингтон",
     "Берлин",
-    "Токио"
+    "Токио",
 ]
 
 LOCATION_NAMES_EN = [
@@ -47,5 +47,5 @@ LOCATION_NAMES_EN = [
     "London",
     "Washington",
     "Berlin",
-    "Tokio"
+    "Tokio",
 ]

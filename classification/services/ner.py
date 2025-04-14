@@ -1,13 +1,15 @@
-from typing import List
+from vsu_task_core.main.ner import SpacyNerExtractorEn, SpacyNerExtractorRu
 
-from vsu_task_core.common.ner import NamedEntity
-from vsu_task_core.main.ner import SpacyNerExtractorRu, SpacyNerExtractorEn
-
-from classification.types.ner import ExtractedEntitiesDTO, NamedEntityDTO
+from classification.types.ner import (
+    ExtractedGroupEntities,
+    ExtractedGroupEntitiesDTO,
+    NamedEntities,
+)
 
 
 class NERService:
-    def extract(text: str, language: str) -> dict[str, list[NamedEntity]]:
+    @staticmethod
+    def extract(text: str, language: str) -> ExtractedGroupEntities:
         if language == "ru":
             entities = SpacyNerExtractorRu().apply(text)
         elif language == "en":
@@ -17,8 +19,16 @@ class NERService:
 
         return {
             "persons": entities.get("persons", []),
-            "locations": entities.get("locations", [])
+            "locations": entities.get("locations", []),
         }
 
-    def get_ner_result(entities: List[NamedEntity]) -> List[str]:
-       return [entity.value for entity in entities]
+    @staticmethod
+    def get_ner_result(
+        group_entities: ExtractedGroupEntities,
+    ) -> ExtractedGroupEntitiesDTO:
+        return {
+            "persons": [entity.value for entity in group_entities["persons"]],
+            "locations": [
+                entity.value for entity in group_entities["locations"]
+            ],
+        }
