@@ -2,26 +2,22 @@ import logging
 import time
 
 from django.core.cache import cache
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.request import Request
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 
 from classification.types.analyze import AnalyzeFieldRequest, AnalyzeFieldResponse
 from classification.utils.cache import get_cache_key
 from classification.utils.validate import ValidationError, validate_request
 
 from .apps import ClassificationConfig
+from .serializers import AnalyzeTextRequestSerializer, AnalyzeTextResponseSerializer, ErrorSerializer
 from .services.fuzzy import FuzzyService
 from .services.language import LanguageService
 from .services.ner import NERService
-from .serializers import (
-    AnalyzeTextRequestSerializer,
-    AnalyzeTextResponseSerializer,
-    ErrorSerializer,
-)
 
 app_name = ClassificationConfig.name
 logger = logging.getLogger(__name__)

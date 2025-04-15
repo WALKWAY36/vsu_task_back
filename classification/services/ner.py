@@ -2,6 +2,7 @@ from vsu_task_core.main.ner import SpacyNerExtractorEn, SpacyNerExtractorRu
 from vsu_task_core.common.lang import Lang
 
 from classification.types.fuzzy import EntityGroup
+from classification.types.ner import ExtractedGroupEntities, ExtractedGroupEntitiesDTO, NamedEntities
 
 
 class NERService:

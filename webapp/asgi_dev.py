@@ -13,10 +13,6 @@ if os.path.exists(env_path):
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "webapp.settings")
 
-application = ProtocolTypeRouter(
-    {
-        "http": get_asgi_application(),
-    }
-)
+application = ProtocolTypeRouter({"http": get_asgi_application()})
 
 Initializer().execute()

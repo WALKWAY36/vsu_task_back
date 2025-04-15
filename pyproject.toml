@@ -1,19 +1,19 @@
 [tool.black]
-line-length = 60
+line-length = 120
 skip-string-normalization = true
 skip-magic-trailing-comma = true
 [tool.isort]
 profile = "black"
-line_length = 60
+line_length = 120
 multi_line_output = 3
 include_trailing_comma = true
 
-exclude = '''
-/(
-    \.git
-  | \.venv
-  | __pycache__
-  | migrations
-)/
-'''
+[tool.isort]
+profile = "black"
+skip = [".git", ".venv", "__pycache__", "migrations", "__init__.py"]
+import_headings = []
+force_to_top = []
+not_skip = []
+# вот это ключевое:
+dont_follow_symlinks = true
 

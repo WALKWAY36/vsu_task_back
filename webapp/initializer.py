@@ -1,6 +1,5 @@
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -12,9 +11,5 @@ class Initializer:
 
             MainTextClassifierByLang().prepare()
         except Exception as exc:
-            logger.error(
-                f"[{self.__class__.__name__}] -> execute error, exception: {exc}"
-            )
-        logger.info(
-            f"[{self.__class__.__name__}] -> execute with {module_name=}"
-        )
+            logger.error(f"[{self.__class__.__name__}] -> execute error, exception: {exc}")
+        logger.info(f"[{self.__class__.__name__}] -> execute with {module_name=}")

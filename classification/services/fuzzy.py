@@ -2,12 +2,7 @@ from vsu_task_core.common.ner import NamedEntity, NERType
 from vsu_task_core.common.lang import Lang
 from vsu_task_core.main.fuzzy import FuzzyRapidMatcher
 
-from classification.constants import (
-    LOCATION_NAMES_EN,
-    LOCATION_NAMES_RU,
-    PERSON_NAMES_EN,
-    PERSON_NAMES_RU,
-)
+from classification.constants import LOCATION_NAMES_EN, LOCATION_NAMES_RU, PERSON_NAMES_EN, PERSON_NAMES_RU
 from classification.types.fuzzy import (
     DtoFuzzy,
     DtoFuzzyField,
