@@ -1,34 +1,27 @@
 from vsu_task_core.main.ner import SpacyNerExtractorEn, SpacyNerExtractorRu
+from vsu_task_core.common.lang import Lang
 
-from classification.types.ner import (
-    ExtractedGroupEntities,
-    ExtractedGroupEntitiesDTO,
-    NamedEntities,
-)
+from classification.types.fuzzy import EntityGroup
 
 
 class NERService:
     @staticmethod
     def extract(text: str, language: str) -> ExtractedGroupEntities:
-        if language == "ru":
+        if language == Lang.RU.value:
             entities = SpacyNerExtractorRu().apply(text)
-        elif language == "en":
+        elif language == Lang.EN.value:
             entities = SpacyNerExtractorEn().apply(text)
         else:
-            return {"persons": [], "locations": []}
+            return {EntityGroup.PERSONS: [], EntityGroup.LOCATIONS: []}
 
         return {
-            "persons": entities.get("persons", []),
-            "locations": entities.get("locations", []),
+            EntityGroup.PERSONS: entities.get(EntityGroup.PERSONS, []),
+            EntityGroup.LOCATIONS: entities.get(EntityGroup.LOCATIONS, []),
         }
 
     @staticmethod
-    def get_ner_result(
-        group_entities: ExtractedGroupEntities,
-    ) -> ExtractedGroupEntitiesDTO:
+    def get_ner_result(group_entities: ExtractedGroupEntities) -> ExtractedGroupEntitiesDTO:
         return {
-            "persons": [entity.value for entity in group_entities["persons"]],
-            "locations": [
-                entity.value for entity in group_entities["locations"]
-            ],
+            EntityGroup.PERSONS: [entity.value for entity in group_entities[EntityGroup.PERSONS]],
+            EntityGroup.LOCATIONS: [entity.value for entity in group_entities[EntityGroup.LOCATIONS]],
         }

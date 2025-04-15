@@ -9,7 +9,7 @@ class LanguageService:
 
     def detect(self, text: str) -> str:
         if not text.strip():
-            return "undefined"
+            return Lang.UNDEFINED.value
 
         result = self.classifier.apply(text)
         return result.value

@@ -1,4 +1,5 @@
 from vsu_task_core.common.ner import NamedEntity, NERType
+from vsu_task_core.common.lang import Lang
 from vsu_task_core.main.fuzzy import FuzzyRapidMatcher
 
 from classification.constants import (
@@ -9,7 +10,9 @@ from classification.constants import (
 )
 from classification.types.fuzzy import (
     DtoFuzzy,
+    DtoFuzzyField,
     DtosFuzzy,
+    EntityGroup,
     FuzzyResultDTO,
     MatchedEntities,
     MatchedEntity,
@@ -23,31 +26,22 @@ class FuzzyService:
     def __init__(self, threshold: float = 90):
         self.matcher = FuzzyRapidMatcher(threshold=threshold)
 
-    def get_fuzzy_result(
-        self, language: str, entities: ExtractedGroupEntities
-    ) -> FuzzyResultDTO:
+    def get_fuzzy_result(self, language: str, entities: ExtractedGroupEntities) -> FuzzyResultDTO:
         references = self.get_references(language)
         matched_persons = self.match_entities(
-            entities["persons"], references["persons"], entity_type="person"
+            entities[EntityGroup.PERSONS], references[EntityGroup.PERSONS], entity_type=NERType.PERSON.value
         )
         matched_locations = self.match_entities(
-            entities["locations"],
-            references["locations"],
-            entity_type="location",
+            entities[EntityGroup.LOCATIONS], references[EntityGroup.LOCATIONS], entity_type=NERType.LOCATION.value
         )
         return {
-            "persons": self.dtos_fuzzy(matched_persons),
-            "locations": self.dtos_fuzzy(matched_locations),
+            EntityGroup.PERSONS: self.dtos_fuzzy(matched_persons),
+            EntityGroup.LOCATIONS: self.dtos_fuzzy(matched_locations),
         }
 
-    def match_entities(
-        self, entities: NamedEntities, reference: Reference, entity_type: str
-    ) -> MatchedEntities:
+    def match_entities(self, entities: NamedEntities, reference: Reference, entity_type: str) -> MatchedEntities:
         named_entity = [
-            NamedEntity(
-                NERType.PERSON if entity_type == "person" else NERType.LOCATION,
-                value,
-            )
+            NamedEntity((NERType.PERSON if entity_type == NERType.PERSON.value else NERType.LOCATION), value)
             for value in reference
         ]
         return self.matcher.match(entities, named_entity)
@@ -55,18 +49,16 @@ class FuzzyService:
     @staticmethod
     def get_references(language: str) -> References:
         return {
-            "persons": PERSON_NAMES_RU if language == "ru" else PERSON_NAMES_EN,
-            "locations": (
-                LOCATION_NAMES_RU if language == "ru" else LOCATION_NAMES_EN
-            ),
+            EntityGroup.PERSONS: (PERSON_NAMES_RU if language == Lang.RU.value else PERSON_NAMES_EN),
+            EntityGroup.LOCATIONS: (LOCATION_NAMES_RU if language == Lang.RU.value else LOCATION_NAMES_EN),
         }
 
     @staticmethod
     def dto_fuzzy(matched_entity: MatchedEntity) -> DtoFuzzy:
         return {
-            "matched": matched_entity.first_name,
-            "suggestion": matched_entity.second_name,
-            "score": matched_entity.score,
+            DtoFuzzyField.MATCHED: matched_entity.first_name,
+            DtoFuzzyField.SUGGESTION: matched_entity.second_name,
+            DtoFuzzyField.SCORE: matched_entity.score,
         }
 
     def dtos_fuzzy(self, matched_entities: MatchedEntities) -> DtosFuzzy:

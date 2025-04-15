@@ -9,6 +9,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 
+from classification.types.analyze import AnalyzeFieldRequest, AnalyzeFieldResponse
 from classification.utils.cache import get_cache_key
 from classification.utils.validate import ValidationError, validate_request
 
@@ -34,25 +35,14 @@ example_text = "Одним солнечным днём они решили сд�
 
 @extend_schema(
     request=AnalyzeTextRequestSerializer,
-    examples=[
-        OpenApiExample(
-            "Пример текста", value={"text": example_text}, request_only=True
-        )
-    ],
+    examples=[OpenApiExample("Пример текста", value={AnalyzeFieldRequest.TEXT: example_text}, request_only=True)],
     responses={
-        status.HTTP_200_OK: OpenApiResponse(
-            response=AnalyzeTextResponseSerializer,
-            description="Успешный запрос",
-        ),
-        status.HTTP_400_BAD_REQUEST: OpenApiResponse(
-            response=ErrorSerializer, description="Некорректный запрос"
-        ),
+        status.HTTP_200_OK: OpenApiResponse(response=AnalyzeTextResponseSerializer, description="Успешный запрос"),
+        status.HTTP_400_BAD_REQUEST: OpenApiResponse(response=ErrorSerializer, description="Некорректный запрос"),
         status.HTTP_422_UNPROCESSABLE_ENTITY: OpenApiResponse(
             response=ErrorSerializer, description="Ошибка валидации данных "
         ),
-        status.HTTP_500_INTERNAL_SERVER_ERROR: OpenApiResponse(
-            response=ErrorSerializer, description="Ошибка сервера"
-        ),
+        status.HTTP_500_INTERNAL_SERVER_ERROR: OpenApiResponse(response=ErrorSerializer, description="Ошибка сервера"),
     },
     tags=["Text Analysis"],
     summary="Analyze input text for named entities",
@@ -80,11 +70,9 @@ def analyze_text(request: Request):
         entities = ner_service.extract(text, language)
         response_data.update(
             {
-                "language": language,
-                "entities": ner_service.get_ner_result(entities),
-                "fuzzy_matches": fuzzy_service.get_fuzzy_result(
-                    language, entities
-                ),
+                AnalyzeFieldResponse.LANGUAGE: language,
+                AnalyzeFieldResponse.ENTITY: ner_service.get_ner_result(entities),
+                AnalyzeFieldResponse.FUZZY: fuzzy_service.get_fuzzy_result(language, entities),
             }
         )
         cache.set(cache_key, response_data, timeout=3600)
@@ -93,19 +81,19 @@ def analyze_text(request: Request):
     except ValidationError as e:
         logger.warning(f"{method_name} - Validation error: {str(e)}")
         response_status = status.HTTP_422_UNPROCESSABLE_ENTITY
-        response_data["error"] = str(e)
+        response_data[AnalyzeFieldResponse.ERROR] = str(e)
         response = Response(response_data, status=response_status)
 
     except ValueError as e:
         logger.warning(f"{method_name} - Client error: {str(e)}")
         response_status = status.HTTP_400_BAD_REQUEST
-        response_data["error"] = str(e)
+        response_data[AnalyzeFieldResponse.ERROR] = str(e)
         response = Response(response_data, status=response_status)
 
     except Exception:
         logger.exception(f"{method_name} - Server error")
         response_status = status.HTTP_500_INTERNAL_SERVER_ERROR
-        response_data["error"] = "Internal server error"
+        response_data[AnalyzeFieldResponse.ERROR] = "Internal server error"
         response = Response(response_data, status=response_status)
 
     finally:
