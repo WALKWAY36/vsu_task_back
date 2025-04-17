@@ -1,25 +1,19 @@
-from vsu_task_core.common.ner import NamedEntity, NERType
 from vsu_task_core.common.lang import Lang
-from vsu_task_core.main.fuzzy import FuzzyRapidMatcher
+from vsu_task_core.common.ner import NamedEntity, NERType
 
-from classification.constants import LOCATION_NAMES_EN, LOCATION_NAMES_RU, PERSON_NAMES_EN, PERSON_NAMES_RU
-from classification.types.fuzzy import (
-    DtoFuzzy,
-    DtoFuzzyField,
-    DtosFuzzy,
-    EntityGroup,
-    FuzzyResultDTO,
-    MatchedEntities,
-    MatchedEntity,
-    Reference,
-    References,
-)
+from classification.constants import (LOCATION_NAMES_EN, LOCATION_NAMES_RU,
+                                      PERSON_NAMES_EN, PERSON_NAMES_RU)
+from classification.core.global_resources import GlobalResources
+from classification.types.fuzzy import (DtoFuzzy, DtoFuzzyField, DtosFuzzy,
+                                        EntityGroup, FuzzyResultDTO,
+                                        MatchedEntities, MatchedEntity,
+                                        Reference, References)
 from classification.types.ner import ExtractedGroupEntities, NamedEntities
 
 
 class FuzzyService:
     def __init__(self, threshold: float = 90):
-        self.matcher = FuzzyRapidMatcher(threshold=threshold)
+        self.matcher = GlobalResources.get_fuzzy_matcher()
 
     def get_fuzzy_result(self, language: str, entities: ExtractedGroupEntities) -> FuzzyResultDTO:
         references = self.get_references(language)
