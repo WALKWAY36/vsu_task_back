@@ -2,19 +2,22 @@ import logging
 import time
 
 from django.core.cache import cache
-from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
+from drf_spectacular.utils import (OpenApiExample, OpenApiResponse,
+                                   extend_schema)
 from rest_framework import status
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from classification.types.analyze import AnalyzeFieldRequest, AnalyzeFieldResponse
+from classification.types.analyze import (AnalyzeFieldRequest,
+                                          AnalyzeFieldResponse)
 from classification.utils.cache import get_cache_key
 from classification.utils.validate import ValidationError, validate_request
 
 from .apps import ClassificationConfig
-from .serializers import AnalyzeTextRequestSerializer, AnalyzeTextResponseSerializer, ErrorSerializer
+from .serializers import (AnalyzeTextRequestSerializer,
+                          AnalyzeTextResponseSerializer, ErrorSerializer)
 from .services.fuzzy import FuzzyService
 from .services.language import LanguageService
 from .services.ner import NERService
@@ -27,7 +30,6 @@ ner_service = NERService()
 fuzzy_service = FuzzyService(threshold=85)
 
 example_text = "Одним солнечным днём они решили сделать что-то необычноые. Вместо того, чтобы оставаться дома, Владислав и Екатерина решили устроить путешествие. Они выбрали современный город. Им оказался Москва."
-
 
 @extend_schema(
     request=AnalyzeTextRequestSerializer,
