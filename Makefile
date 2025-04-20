@@ -5,25 +5,6 @@ DJANGO_CMD=$(PYTHON_PATH) ${MANAGE_PY_PATH}
 run:
 	$(DJANGO_CMD) runserver
 
-migrate:
-	$(DJANGO_CMD) migrate
-
-makemigrations:
-	$(DJANGO_CMD) makemigrations
-
-createsuperuser:
-	$(DJANGO_CMD) createsuperuser
-
-shell:
-	$(DJANGO_CMD) shell
-
-# ======== Tests & Linting ========
-lint:
-	ruff check .
-
-format:
-	ruff format .
-
 # ======== OpenAPI / Schema ========
 schema:
 	$(DJANGO_CMD) spectacular --file schema.yaml
